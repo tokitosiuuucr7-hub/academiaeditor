@@ -1,97 +1,153 @@
-import { NextRequest, NextResponse } from "next/server";
+// app/api/process/route.ts
+import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
-type Mode = "corregir" | "humanizar" | "organizar" | "resumir";
-
+// Cliente de OpenAI SOLO en el servidor
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const MODE_INSTRUCTIONS: Record<Mode, string> = {
-  corregir:
-    "Corrige ortografía, gramática, acentuación y puntuación del texto en español. " +
-    "Mantén el sentido original y el estilo académico. Devuelve solo la versión corregida.",
-  humanizar:
-    "Reescribe el texto en un tono más natural, claro y humano, pero manteniendo el rigor académico. " +
-    "Evita frases robóticas o repetitivas. Devuelve solo la versión mejorada.",
-  organizar:
-    "Organiza el contenido en estructura académica: INTRODUCCIÓN, DESARROLLO y CONCLUSIÓN. " +
-    "Ordena las ideas lógicamente, mejora la coherencia y cohesión. Devuelve solo el texto organizado.",
-  resumir:
-    "Elabora un resumen en español, breve pero completo, con ideas clave, sin perder precisión. " +
-    "Puedes usar viñetas si ayuda a la claridad. Devuelve solo el resumen.",
-};
+// Si quieres forzar runtime Node (opcional):
+// export const runtime = "nodejs";
 
-export async function POST(req: NextRequest) {
+type Mode =
+  | "correccion"        // Corrección académica
+  | "resumen"          // Resumir
+  | "redactar"         // Redactar PRO
+  | "redaccion_natural"// Redacción natural PRO
+  | "organizar"        // Organizar PRO
+  | "mejorar_nivel"    // Mejorar nivel PRO
+  | "parafrasear"      // Parafrasear PRO
+  | "detector_ia"      // Detector IA PRO
+  | "plagio";          // Revisión de plagio PRO (solo análisis orientativo)
+
+// Genera el mensaje de sistema según la pestaña / modo
+function getSystemPrompt(mode: Mode): string {
+  switch (mode) {
+    case "correccion":
+      return `
+Eres un corrector académico experto. 
+Corrige ortografía, gramática, puntuación y acentos en español neutro.
+Respeta al máximo el estilo del autor y su estructura.
+Devuelve SOLO el texto corregido, sin explicaciones.
+`;
+
+    case "resumen":
+      return `
+Eres un experto en redacción académica.
+Resume el texto del usuario en español claro y conciso, manteniendo las ideas principales.
+Devuelve SOLO el resumen, sin comentarios adicionales.
+`;
+
+    case "redactar":
+      return `
+Eres un redactor académico profesional.
+Reescribe el texto del usuario con estilo formal académico, mejorando claridad, cohesión y vocabulario.
+Mantén el significado original.
+Devuelve SOLO la versión mejorada.
+`;
+
+    case "redaccion_natural":
+      return `
+Eres un editor especializado en hacer textos más naturales.
+Convierte el texto del usuario en un estilo más conversacional y fácil de leer,
+sin perder el contenido ni el registro respetuoso.
+Devuelve SOLO el texto reescrito.
+`;
+
+    case "organizar":
+      return `
+Eres un editor académico que organiza textos.
+Reorganiza el texto para que tenga una estructura clara (introducción, desarrollo, conclusión),
+usando conectores lógicos. No inventes contenido nuevo importante.
+Devuelve SOLO el texto reorganizado.
+`;
+
+    case "mejorar_nivel":
+      return `
+Eres un editor académico avanzado.
+Eleva el nivel del texto del usuario al estilo universitario, con mejor vocabulario y redacción,
+pero sin agregar ideas nuevas.
+Devuelve SOLO el texto mejorado.
+`;
+
+    case "parafrasear":
+      return `
+Eres un experto en parafraseo académico.
+Reescribe el texto del usuario con otras palabras, cambiando estructura y vocabulario
+para evitar plagio, pero conservando el significado.
+Devuelve SOLO el texto parafraseado.
+`;
+
+    case "detector_ia":
+      return `
+Eres un analista de estilo de texto.
+Evalúa si el texto parece escrito por una IA o por un humano y explica brevemente por qué.
+Devuelve un breve diagnóstico y una explicación corta.
+`;
+
+    case "plagio":
+      return `
+Eres un asesor académico.
+No tienes acceso a bases de datos de plagio, pero puedes identificar frases muy genéricas
+o poco originales y sugerir cómo reescribirlas.
+Señala posibles riesgos de similitud y sugiere mejoras.
+`;
+
+    default:
+      return `
+Eres un editor académico que mejora claridad, gramática y estilo del texto del usuario
+sin cambiar su significado. Devuelve SOLO el texto mejorado.
+`;
+  }
+}
+
+export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const text: string | undefined = body?.text;
-    const mode: Mode = (body?.mode as Mode) ?? "corregir";
+    // 1. Leer body
+    const body = await req.json().catch(() => ({}));
+    const text: string = body.text ?? "";
+    const mode: Mode = body.mode ?? "correccion";
 
-    if (!text || typeof text !== "string" || text.trim().length === 0) {
+    // 2. Validaciones básicas
+    if (!text || typeof text !== "string") {
       return NextResponse.json(
-        { error: "No se recibió texto para procesar." },
+        { error: "Falta el campo 'text' en el body de la petición." },
         { status: 400 }
       );
     }
 
     if (!process.env.OPENAI_API_KEY) {
+      // No rompas el build: solo error en tiempo de ejecución
       return NextResponse.json(
-        {
-          error:
-            "Falta la variable OPENAI_API_KEY en .env.local. Añádela y reinicia el servidor.",
-        },
+        { error: "Falta la variable de entorno OPENAI_API_KEY en el servidor." },
         { status: 500 }
       );
     }
 
-    const instruccionModo = MODE_INSTRUCTIONS[mode] ?? MODE_INSTRUCTIONS["corregir"];
+    const systemPrompt = getSystemPrompt(mode);
 
+    // 3. Llamada a OpenAI
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini", // puedes cambiar a gpt-4o-mini si lo prefieres
+      model: "gpt-4.1-mini", // o el modelo que estés usando
       messages: [
-        {
-          role: "system",
-          content:
-            "Eres un asistente experto en redacción académica en español. " +
-            "Siempre devuelves SOLO el texto final solicitado, sin explicaciones adicionales.",
-        },
-        {
-          role: "user",
-          content: `${instruccionModo}\n\nTexto original:\n\n${text}`,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text },
       ],
-      temperature: 0.3,
-      max_completion_tokens: 800, // para permitir respuestas largas
+      temperature: 0.4,
     });
 
     const result =
       completion.choices[0]?.message?.content?.trim() ??
-      "No se obtuvo respuesta de la IA.";
+      "No se recibió respuesta del modelo.";
 
-    return NextResponse.json({ result }, { status: 200 });
-  } catch (err: any) {
-    console.error("Error en /api/ai:", err);
-return NextResponse.json(
-  {
-    error: String(err),
-    stack: err?.stack ?? null,
-  },
-  { status: 500 }
-);
-
-    const status = err?.status ?? 500;
-    let message =
-      "Error interno al llamar a la IA. Intenta de nuevo en unos momentos.";
-
-    if (status === 429) {
-      message =
-        "Error 429: Parece que has alcanzado algún límite de uso o cuota en OpenAI. " +
-        "Revisa en https://platform.openai.com/ la sección Billing y Usage (asegúrate de que el proyecto y la organización correctos tienen saldo).";
-    } else if (err?.message) {
-      message = err.message;
-    }
-
-    return NextResponse.json({ error: message }, { status });
+    // 4. Respuesta al front
+    return NextResponse.json({ result });
+  } catch (err) {
+    console.error("Error en /api/process:", err);
+    return NextResponse.json(
+      { error: "Error interno al procesar el texto." },
+      { status: 500 }
+    );
   }
 }

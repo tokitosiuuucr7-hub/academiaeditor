@@ -2,6 +2,10 @@
 
 import { useMemo, useState, type CSSProperties } from "react";
 
+/* =======================
+   Tipos básicos
+======================= */
+
 type Mode =
   | "corregir"
   | "resumir"
@@ -16,18 +20,17 @@ type Mode =
 type Plan = "free" | "pro" | "premium";
 
 const MODES: { id: Mode; label: string }[] = [
-  { id: "corregir", label: "Corregir" },
+  { id: "corregir", label: "Corrección académica" },
   { id: "resumir", label: "Resumir" },
   { id: "redactar", label: "Redactar" },
-  { id: "humanizar", label: "Humanizar" },
+  { id: "humanizar", label: "Redacción natural" },
   { id: "organizar", label: "Organizar" },
   { id: "mejorar", label: "Mejorar nivel" },
   { id: "parafrasear", label: "Parafrasear" },
   { id: "detectarIA", label: "Detector IA" },
-  { id: "plagio", label: "Detector plagio" },
+  { id: "plagio", label: "Revisión de plagio" },
 ];
 
-// qué modos puede usar cada plan
 const FREE_MODES: Mode[] = ["corregir", "resumir"];
 const PRO_MODES: Mode[] = [
   ...FREE_MODES,
@@ -45,8 +48,12 @@ function allowedModesByPlan(plan: Plan): Mode[] {
   return PREMIUM_MODES;
 }
 
+/* =======================
+   Componente principal
+======================= */
+
 export default function Home() {
-  const [plan, setPlan] = useState<Plan>("free"); // Gratis por defecto
+  const [plan, setPlan] = useState<Plan>("free");
   const [texto, setTexto] = useState("");
   const [modo, setModo] = useState<Mode>("corregir");
   const [resultado, setResultado] = useState("");
@@ -56,165 +63,69 @@ export default function Home() {
   const placeholder = useMemo(() => {
     switch (modo) {
       case "corregir":
-        return "Pega tu texto para corregir ortografía y gramática…";
+        return "Pega tu texto y obtén una corrección académica lista para entregar (ortografía, gramática y puntuación)…";
       case "resumir":
-        return "Pega tu texto largo para obtener un resumen claro y estructurado…";
+        return "Pega un texto largo y obtén un resumen claro, corto y estructurado…";
       case "redactar":
-        return "Escribe ideas sueltas o bullets y la herramienta intentará redactar un párrafo académico…";
+        return "Escribe ideas sueltas o bullets y generaremos un párrafo académico coherente…";
       case "humanizar":
-        return "Pega un texto muy robótico para hacerlo más natural y fácil de leer…";
+        return "Pega un texto generado con IA o muy robótico para convertirlo en una redacción natural que no parece hecha con IA…";
       case "organizar":
-        return "Pega un texto desordenado para organizarlo en secciones y párrafos…";
+        return "Pega un texto desordenado para convertirlo en secciones y párrafos ordenados…";
       case "mejorar":
-        return "Pega tu texto para mejorar vocabulario, fluidez y nivel académico…";
+        return "Pega tu texto para mejorar vocabulario, fluidez y nivel académico sin cambiar el mensaje…";
       case "parafrasear":
-        return "Pega un fragmento que quieras reescribir con otras palabras…";
+        return "Pega un fragmento que quieras reescribir con otras palabras manteniendo la idea…";
       case "detectarIA":
-        return "Pega aquí el texto que quieras analizar para sospecha de redacción con IA (simulado)…";
+        return "Pega aquí el texto que quieras analizar por posible redacción con IA (análisis orientativo)…";
       case "plagio":
-        return "Pega un texto para analizar repeticiones internas y posibles riesgos de plagio (simulado)…";
+        return "Pega un texto para una revisión preventiva que te ayude a evitar sanciones académicas por plagio (análisis interno simulado)…";
     }
   }, [modo]);
 
-  // 🔧 Simulador sencillo; luego se puede conectar a IA real
-  function procesarTextoSimulado(input: string, m: Mode) {
-    const limpio = input.trim();
-    if (!limpio) return "";
-
-    const base = limpio.replace(/\s+/g, " ");
-
-    switch (m) {
-      case "corregir": {
-        const sentences = base
-          .split(/(?<=[.!?])\s+/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-          .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
-        return "✅ Versión corregida (simulada):\n\n" + sentences.join(" ");
-      }
-      case "resumir": {
-        const palabras = base.split(/\s+/);
-        const primeras = palabras.slice(0, 80).join(" ");
-        return (
-          "📌 Resumen (simulado):\n\n" +
-          "• Idea principal: " +
-          primeras +
-          (palabras.length > 80 ? "…" : "") +
-          "\n• Longitud original: " +
-          palabras.length +
-          " palabras."
-        );
-      }
-      case "redactar": {
-        return (
-          "📝 Redacción (simulada):\n\n" +
-          "El presente texto desarrolla las siguientes ideas de manera articulada: " +
-          base
-        );
-      }
-      case "humanizar": {
-        return (
-          "🤝 Versión más natural (simulada):\n\n" +
-          "En pocas palabras, el texto dice lo siguiente de forma más cercana:\n" +
-          base
-        );
-      }
-      case "organizar": {
-        return `📚 Organización sugerida (simulada):
-
-INTRODUCCIÓN
-- Contexto general
-- Propósito del texto
-
-DESARROLLO
-- Idea principal 1
-- Idea principal 2
-- Argumentos de apoyo
-
-CONCLUSIÓN
-- Síntesis de hallazgos
-- Cierre o recomendación
-
-TEXTO ORIGINAL
---------------------
-${base}`;
-      }
-      case "mejorar": {
-        return (
-          "🚀 Sugerencia de mejora (simulada):\n\n" +
-          "Este texto puede ganar claridad si se revisan conectores, tiempos verbales y se incorporan términos más precisos. Versión base:\n\n" +
-          base
-        );
-      }
-      case "parafrasear": {
-        return (
-          "🔁 Parafraseo (simulado):\n\n" +
-          "En esencia, el texto puede expresarse así con otras palabras:\n" +
-          base
-        );
-      }
-      case "detectarIA": {
-        // simulito tonto: si tiene pocas palabras distintas, sube la “sospecha”
-        const palabras = base.split(/\s+/);
-        const total = palabras.length;
-        const uniques = new Set(
-          palabras.map((p) => p.toLowerCase().replace(/[^a-záéíóúüñ]/gi, ""))
-        ).size;
-        const ratio = total ? uniques / total : 0;
-        let prob = 50;
-        if (ratio < 0.4) prob = 75;
-        else if (ratio > 0.65) prob = 30;
-
-        return (
-          "🤖 Detector de IA (SIMULADO, NO REAL)\n\n" +
-          `• Longitud aproximada: ${total} palabras\n` +
-          `• Palabras únicas aprox.: ${uniques}\n` +
-          `• Diversidad léxica (estimada): ${(ratio * 100).toFixed(1)}%\n\n` +
-          `➡ Probabilidad ESTIMADA (ficticia) de que haya sido generado con IA: ${prob}%\n\n` +
-          "⚠ Esta herramienta es SOLO orientativa y educativa. No es un detector oficial ni debe usarse como prueba definitiva."
-        );
-      }
-      case "plagio": {
-        const oraciones = base
-          .split(/(?<=[.!?])\s+/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const conteo: Record<string, number> = {};
-        oraciones.forEach((o) => {
-          conteo[o] = (conteo[o] || 0) + 1;
-        });
-        const repetidas = Object.entries(conteo)
-          .filter(([_, c]) => c > 1)
-          .map(([o, c]) => `• "${o}" (se repite ${c} veces)`);
-
-        return (
-          "🔍 Detector de plagio interno (SIMULADO)\n\n" +
-          `• Oraciones totales: ${oraciones.length}\n` +
-          `• Oraciones diferentes: ${Object.keys(conteo).length}\n\n` +
-          (repetidas.length
-            ? "Frases que aparecen varias veces:\n" +
-              repetidas.join("\n") +
-              "\n\n"
-            : "No se detectaron frases internamente repetidas de forma clara.\n\n") +
-          "⚠ Este detector solo analiza repeticiones dentro del MISMO texto.\n" +
-          "No compara contra internet ni bases de datos. Es solo una ayuda educativa."
-        );
-      }
-    }
-  }
+  /* =======================
+     Procesar texto con la API /api/ai
+  ======================= */
 
   async function onProcesar() {
+    if (!texto.trim()) {
+      setResultado("⚠️ Pega un texto primero.");
+      return;
+    }
+
     setCargando(true);
     setResultado("");
 
-    await new Promise((r) => setTimeout(r, 700)); // pequeño “loading”
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          texto,
+          modo,
+        }),
+      });
 
-    const out = procesarTextoSimulado(texto, modo);
-    setResultado(out || "⚠️ Pega un texto primero.");
-    setCargando(false);
+      const data = await res.json();
+
+      if (data.error) {
+        setResultado("❌ Error: " + data.error);
+      } else {
+        setResultado(data.resultado || "Sin respuesta de la IA.");
+      }
+    } catch (err) {
+      setResultado("❌ Error conectando con la IA.");
+    } finally {
+      setCargando(false);
+    }
   }
 
-  // 🔐 “Pago” simulado: activa PRO o PREMIUM sin dinero real (para pruebas)
+  /* =======================
+     Simulación de “pago”
+  ======================= */
+
   async function activarPlanSimulado(target: Plan, precio: number) {
     if (plan === target) return;
     setPagando(target);
@@ -222,20 +133,24 @@ ${base}`;
     setPlan(target);
     setPagando(null);
     alert(
-      `✅ Plan ${target.toUpperCase()} activado (simulado). Valor: $${precio.toLocaleString(
+      `✅ Plan ${target.toUpperCase()} activado para esta sesión.\n\nValor de referencia: $${precio.toLocaleString(
         "es-CO"
-      )}. Para cobros reales hay que conectar una pasarela de pagos.`
+      )}/mes.\nEn producción este botón se conectará a una pasarela de pagos segura (Stripe, Wompi, etc.).`
     );
   }
 
   const planLabel =
     plan === "free" ? "GRATIS" : plan === "pro" ? "PRO" : "PREMIUM";
 
+  /* =======================
+     Render
+  ======================= */
+
   return (
     <main
       style={{
         minHeight: "100vh",
-        background: "radial-gradient(circle at top, #1f2937 0, #020617 55%)",
+        background: "radial-gradient(circle at top, #020617 0, #020617 55%)",
         padding: "40px 16px",
         color: "#e5e7eb",
         display: "flex",
@@ -245,27 +160,27 @@ ${base}`;
       <div
         style={{
           width: "100%",
-          maxWidth: 1100,
+          maxWidth: 1120,
           background:
-            "linear-gradient(145deg, rgba(15,23,42,0.98), rgba(15,23,42,0.9))",
+            "linear-gradient(145deg, rgba(15,23,42,0.99), rgba(15,23,42,0.93))",
           borderRadius: 28,
           padding: 32,
           boxShadow:
-            "0 30px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(148,163,184,0.15)",
-          border: "1px solid rgba(148,163,184,0.18)",
+            "0 30px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(148,163,184,0.16)",
+          border: "1px solid rgba(148,163,184,0.16)",
         }}
       >
-        {/* Header con logo estilo “superhéroe” */}
+        {/* Header */}
         <header
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 18,
+            marginBottom: 22,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            {/* Logo circular tipo insignia */}
+            {/* Logo */}
             <div
               style={{
                 width: 52,
@@ -278,8 +193,8 @@ ${base}`;
                 background:
                   "radial-gradient(circle at 30% 20%, #4ade80, #16a34a 40%, #0f172a 100%)",
                 boxShadow:
-                  "0 0 25px rgba(34,197,94,0.7), 0 0 0 1px rgba(15,23,42,0.9)",
-                transform: "skewX(-8deg)",
+                  "0 0 25px rgba(34,197,94,0.6), 0 0 0 1px rgba(15,23,42,0.9)",
+                transform: "skewX(-6deg)",
               }}
             >
               <span
@@ -287,7 +202,7 @@ ${base}`;
                   fontWeight: 900,
                   fontSize: 22,
                   letterSpacing: -1,
-                  textShadow: "0 0 10px rgba(0,0,0,0.6)",
+                  textShadow: "0 2px 8px rgba(0,0,0,0.7)",
                 }}
               >
                 AE
@@ -309,10 +224,11 @@ ${base}`;
                   margin: "4px 0 0 0",
                   fontSize: 13,
                   color: "#9ca3af",
+                  maxWidth: 420,
                 }}
               >
-                Plataforma académica con IA. Planes GRATIS, PRO y PREMIUM para
-                estudiantes y docentes.
+                Editor académico con IA para estudiantes y docentes: corrige,
+                resume y mejora trabajos en segundos, sin perder tu estilo.
               </p>
             </div>
           </div>
@@ -326,7 +242,7 @@ ${base}`;
                 color: "#6b7280",
               }}
             >
-              v0.2 · Modo laboratorio
+              Versión inicial · Acceso anticipado
             </div>
             <div
               style={{
@@ -355,6 +271,19 @@ ${base}`;
           </div>
         </header>
 
+        {/* Texto psicológico de precio */}
+        <p
+          style={{
+            fontSize: 12,
+            color: "#9ca3af",
+            marginTop: 0,
+            marginBottom: 14,
+          }}
+        >
+          Menos de lo que cuesta una sola asesoría individual, para corregir y
+          mejorar todos tus textos del mes.
+        </p>
+
         {/* Sección de precios */}
         <section
           style={{
@@ -366,29 +295,46 @@ ${base}`;
         >
           {/* Plan gratis */}
           <div style={pricingCardStyle(plan === "free")}>
-            <div style={planTitleStyle}>Plan Gratis</div>
+            <div style={planHeaderRowStyle}>
+              <div style={planTitleStyle}>Plan Gratis</div>
+              <span style={planBadgeStyle}>Empezar</span>
+            </div>
             <div style={priceStyle}>
               $0 <span style={priceUnitStyle}>/mes</span>
             </div>
             <ul style={pricingListStyle}>
-              <li>✔ Acceso a Corregir</li>
-              <li>✔ Acceso a Resumir</li>
-              <li>✖ Otras funciones PRO/PREMIUM bloqueadas</li>
+              <li>✔ Corrección académica lista para entregar</li>
+              <li>✔ Resúmenes básicos de textos</li>
+              <li>✖ Sin funciones avanzadas ni análisis</li>
             </ul>
             <button style={currentPlanButtonStyle}>Plan actual</button>
           </div>
 
           {/* Plan PRO */}
           <div style={pricingCardStyle(plan === "pro")}>
-            <div style={{ ...planTitleStyle, color: "#22c55e" }}>Plan Pro</div>
+            <div style={planHeaderRowStyle}>
+              <div style={{ ...planTitleStyle, color: "#22c55e" }}>
+                Plan Pro
+              </div>
+              <span
+                style={{
+                  ...planBadgeStyle,
+                  backgroundColor: "rgba(34,197,94,0.15)",
+                  color: "#bbf7d0",
+                  borderColor: "rgba(34,197,94,0.6)",
+                }}
+              >
+                Más usado
+              </span>
+            </div>
             <div style={priceStyle}>
-              $10.000 <span style={priceUnitStyle}>/mes</span>
+              $10.000 <span style={priceUnitStyle}>/mes · ≈ $333/día</span>
             </div>
             <ul style={pricingListStyle}>
               <li>✔ Todo lo del plan Gratis</li>
-              <li>✔ Redactar, Humanizar, Organizar</li>
-              <li>✔ Mejorar nivel y Parafrasear</li>
-              <li>✖ Detectores de IA y plagio</li>
+              <li>✔ Redacción natural que no parece hecha con IA</li>
+              <li>✔ Organización clara y mejora de estilo en tus trabajos</li>
+              <li>✔ Ideal para estudiantes de colegio y universidad</li>
             </ul>
             <button
               onClick={() => activarPlanSimulado("pro", 10000)}
@@ -400,25 +346,38 @@ ${base}`;
               )}
             >
               {plan === "pro"
-                ? "Ya eres PRO"
+                ? "Plan PRO activo"
                 : pagando === "pro"
-                ? "Procesando pago…"
-                : "Pagar PRO (simulado)"}
+                ? "Activando tu plan…"
+                : "Empezar con PRO"}
             </button>
           </div>
 
           {/* Plan PREMIUM */}
           <div style={pricingCardStyle(plan === "premium")}>
-            <div style={{ ...planTitleStyle, color: "#facc15" }}>
-              Plan Premium
+            <div style={planHeaderRowStyle}>
+              <div style={{ ...planTitleStyle, color: "#facc15" }}>
+                Plan Premium
+              </div>
+              <span
+                style={{
+                  ...planBadgeStyle,
+                  backgroundColor: "rgba(250,204,21,0.12)",
+                  color: "#facc15",
+                  borderColor: "rgba(250,204,21,0.7)",
+                }}
+              >
+                Docentes
+              </span>
             </div>
             <div style={priceStyle}>
-              $12.000 <span style={priceUnitStyle}>/mes</span>
+              $12.000 <span style={priceUnitStyle}>/mes · ≈ $400/día</span>
             </div>
             <ul style={pricingListStyle}>
               <li>✔ Todo lo del plan Pro</li>
-              <li>✔ Detector de IA (simulado)</li>
-              <li>✔ Detector de plagio interno (simulado)</li>
+              <li>✔ Análisis orientativo de IA en tus textos</li>
+              <li>✔ Revisión preventiva para evitar sanciones académicas por plagio</li>
+              <li>✔ Pensado para docentes y tutores con muchos textos</li>
             </ul>
             <button
               onClick={() => activarPlanSimulado("premium", 12000)}
@@ -430,10 +389,10 @@ ${base}`;
               )}
             >
               {plan === "premium"
-                ? "Ya eres PREMIUM"
+                ? "Plan PREMIUM activo"
                 : pagando === "premium"
-                ? "Procesando pago…"
-                : "Pagar PREMIUM (simulado)"}
+                ? "Activando tu plan…"
+                : "Subir a PREMIUM"}
             </button>
           </div>
         </section>
@@ -457,7 +416,7 @@ ${base}`;
                 onClick={() => {
                   if (locked) {
                     alert(
-                      "🔒 Esta función está bloqueada en tu plan actual. Actualiza tu plan para usarla."
+                      "🔒 Esta función no está incluida en tu plan actual.\n\nDesbloquéala con el plan PRO o PREMIUM para usar todas las herramientas del editor académico."
                     );
                     return;
                   }
@@ -493,7 +452,7 @@ ${base}`;
               border: "1px solid rgba(148,163,184,0.4)",
               outline: "none",
               background:
-                "linear-gradient(135deg, rgba(15,23,42,0.96), rgba(15,23,42,0.9))",
+                "linear-gradient(135deg, rgba(15,23,42,0.97), rgba(15,23,42,0.9))",
               color: "#e5e7eb",
               resize: "vertical",
               boxShadow: "inset 0 0 0 1px rgba(15,23,42,0.9)",
@@ -540,7 +499,7 @@ ${base}`;
             style={{
               whiteSpace: "pre-wrap",
               background:
-                "linear-gradient(135deg, rgba(15,23,42,0.97), rgba(15,23,42,0.9))",
+                "linear-gradient(135deg, rgba(15,23,42,0.98), rgba(15,23,42,0.9))",
               padding: 14,
               borderRadius: 18,
               border: "1px solid rgba(148,163,184,0.35)",
@@ -549,7 +508,7 @@ ${base}`;
               color: resultado ? "#e5e7eb" : "#6b7280",
             }}
           >
-            {resultado || "Aquí verás el resultado…"}
+            {resultado || "Aquí verás el resultado del procesador académico…"}
           </pre>
         </section>
       </div>
@@ -557,30 +516,48 @@ ${base}`;
   );
 }
 
-/** 🎨 Estilos auxiliares */
+/* =======================
+   Estilos auxiliares
+======================= */
 
 function pricingCardStyle(selected: boolean): CSSProperties {
   return {
     borderRadius: 18,
     padding: 16,
     border: selected
-      ? "1px solid rgba(34,197,94,0.8)"
+      ? "1px solid rgba(34,197,94,0.85)"
       : "1px solid rgba(148,163,184,0.45)",
     background: selected
-      ? "linear-gradient(135deg, rgba(22,163,74,0.08), rgba(15,23,42,0.95))"
-      : "linear-gradient(135deg, rgba(15,23,42,0.98), rgba(15,23,42,0.96))",
-    boxShadow: selected ? "0 10px 30px rgba(34,197,94,0.35)" : "none",
+      ? "linear-gradient(135deg, rgba(22,163,74,0.12), rgba(15,23,42,0.97))"
+      : "linear-gradient(135deg, rgba(15,23,42,0.99), rgba(15,23,42,0.97))",
+    boxShadow: selected ? "0 12px 32px rgba(34,197,94,0.35)" : "none",
     display: "flex",
     flexDirection: "column",
     gap: 6,
-    minHeight: 170,
+    minHeight: 180,
   };
 }
+
+const planHeaderRowStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+};
 
 const planTitleStyle: CSSProperties = {
   fontSize: 12,
   textTransform: "uppercase",
   color: "#9ca3af",
+};
+
+const planBadgeStyle: CSSProperties = {
+  fontSize: 10,
+  textTransform: "uppercase",
+  letterSpacing: 1,
+  padding: "2px 8px",
+  borderRadius: 999,
+  border: "1px solid rgba(148,163,184,0.6)",
+  color: "#e5e7eb",
 };
 
 const priceStyle: CSSProperties = {
@@ -590,7 +567,7 @@ const priceStyle: CSSProperties = {
 };
 
 const priceUnitStyle: CSSProperties = {
-  fontSize: 13,
+  fontSize: 12,
   color: "#9ca3af",
 };
 
@@ -632,7 +609,8 @@ function payButtonStyle(
   };
 }
 
-/** 🎨 Estilo distinto para cada modo (y si está bloqueado) */
+/* Estilos de los chips de modos */
+
 function chipStyle(
   id: Mode,
   activo: Mode,
@@ -722,7 +700,6 @@ function chipStyle(
     };
   }
 
-  // estilo cuando NO está activo
   return {
     ...base,
     borderColor: "rgba(55,65,81,0.9)",
