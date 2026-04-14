@@ -156,7 +156,7 @@ export default function Home() {
   async function activarPlanSimulado(target: Plan, precio: number) {
     if (plan === target) return;
     setPagando(target);
-    await new Promise((r) => setTimeout(r, 1200));
+    await new Promise((r) => setTimeout(r, 7000));
     setPlan(target);
     setPagando(null);
     alert(
@@ -355,7 +355,7 @@ export default function Home() {
               </span>
             </div>
             <div style={priceStyle}>
-              $10.000 <span style={priceUnitStyle}>/mes · ≈ $333/día</span>
+              $5.000 COP<span style={priceUnitStyle}>/mes · ≈ $166 COP/día</span>
             </div>
             <ul style={pricingListStyle}>
               <li>✔ Todo lo del plan Gratis</li>
@@ -364,7 +364,7 @@ export default function Home() {
               <li>✔ Ideal para estudiantes de colegio y universidad</li>
             </ul>
             <button
-              onClick={() => activarPlanSimulado("pro", 10000)}
+              onClick={() => activarPlanSimulado("pro", 5000)}
               disabled={plan === "pro" || pagando !== null}
               style={payButtonStyle(
                 plan === "pro",
@@ -398,7 +398,7 @@ export default function Home() {
               </span>
             </div>
             <div style={priceStyle}>
-              $12.000 <span style={priceUnitStyle}>/mes · ≈ $400/día</span>
+              $7.000 COP<span style={priceUnitStyle}>/mes · ≈ $233 COP/día</span>
             </div>
             <ul style={pricingListStyle}>
               <li>✔ Todo lo del plan Pro</li>
@@ -410,7 +410,7 @@ export default function Home() {
               <li>✔ Pensado para docentes y tutores con muchos textos</li>
             </ul>
             <button
-              onClick={() => activarPlanSimulado("premium", 12000)}
+              onClick={() => activarPlanSimulado("premium", 7000)}
               disabled={plan === "premium" || pagando !== null}
               style={payButtonStyle(
                 plan === "premium",
