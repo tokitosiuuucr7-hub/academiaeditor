@@ -18,8 +18,6 @@ type Mode =
   | "detectarIA"
   | "plagio";
 
-type Plan = "free" | "pro" | "premium";
-
 const MODES: { id: Mode; label: string }[] = [
   { id: "corregir", label: "Corrección académica" },
   { id: "resumir", label: "Resumir" },
@@ -32,48 +30,20 @@ const MODES: { id: Mode; label: string }[] = [
   { id: "plagio", label: "Revisión de plagio" },
 ];
 
-const FREE_MODES: Mode[] = ["corregir", "resumir"];
-const PRO_MODES: Mode[] = [
-  ...FREE_MODES,
-  "redactar",
-  "humanizar",
-  "organizar",
-  "mejorar",
-  "parafrasear",
-];
-const PREMIUM_MODES: Mode[] = [...PRO_MODES, "detectarIA", "plagio"];
-
-function allowedModesByPlan(plan: Plan): Mode[] {
-  if (plan === "free") return FREE_MODES;
-  if (plan === "pro") return PRO_MODES;
-  return PREMIUM_MODES;
-}
-
 /* =======================
    Componente principal
 ======================= */
 
 export default function Home() {
-  const [plan, setPlan] = useState<Plan>("free");
   const [texto, setTexto] = useState("");
   const [modo, setModo] = useState<Mode>("corregir");
   const [resultado, setResultado] = useState("");
   const [cargando, setCargando] = useState(false);
-  const [pagando, setPagando] = useState<Plan | null>(null);
-
-  /* =======================
-     ✅ NUEVO: Scores premium (solo UI)
-     - aiScore: porcentaje para Detector IA
-     - plagiarismScore: porcentaje para Plagio
-     (No toca tu API, no rompe nada)
-  ======================= */
 
   const aiScore = useMemo(() => {
     const n = texto.trim().length;
     if (n === 0) return 0;
 
-    // Heurística suave: texto más largo = score más estable
-    // (Puedes reemplazar esto por un score real de tu API luego)
     const base = Math.round(n / 18);
     return Math.min(97, Math.max(3, base));
   }, [texto]);
@@ -81,8 +51,6 @@ export default function Home() {
   const plagiarismScore = useMemo(() => {
     if (!texto.trim()) return 0;
 
-    // Basado en aiScore para demo, un poco más conservador
-    // (Puedes reemplazar por score real luego)
     const v = aiScore - 8;
     return Math.max(4, Math.min(92, v));
   }, [texto, aiScore]);
@@ -148,26 +116,6 @@ export default function Home() {
       setCargando(false);
     }
   }
-
-  /* =======================
-     Simulación de “pago”
-  ======================= */
-
-  async function activarPlanSimulado(target: Plan, precio: number) {
-    if (plan === target) return;
-    setPagando(target);
-    await new Promise((r) => setTimeout(r, 7000));
-    setPlan(target);
-    setPagando(null);
-    alert(
-      `✅ Plan ${target.toUpperCase()} activado para esta sesión.\n\nValor de referencia: $${precio.toLocaleString(
-        "es-CO"
-      )}/mes.\nEn producción este botón se conectará a una pasarela de pagos segura (Stripe, Wompi, etc.).`
-    );
-  }
-
-  const planLabel =
-    plan === "free" ? "GRATIS" : plan === "pro" ? "PRO" : "PREMIUM";
 
   /* =======================
      Render
@@ -269,7 +217,7 @@ export default function Home() {
                 color: "#6b7280",
               }}
             >
-              Versión inicial · Acceso anticipado
+              Versión inicial · Acceso gratuito
             </div>
             <div
               style={{
@@ -277,28 +225,18 @@ export default function Home() {
                 fontSize: 11,
                 padding: "3px 8px",
                 borderRadius: 999,
-                border: "1px solid rgba(148,163,184,0.6)",
+                border: "1px solid rgba(34,197,94,0.6)",
                 display: "inline-block",
+                color: "#bbf7d0",
+                background: "rgba(34,197,94,0.10)",
               }}
             >
-              Plan actual:{" "}
-              <strong
-                style={{
-                  color:
-                    plan === "premium"
-                      ? "#facc15"
-                      : plan === "pro"
-                      ? "#22c55e"
-                      : "#e5e7eb",
-                }}
-              >
-                {planLabel}
-              </strong>
+              Todas las funciones desbloqueadas
             </div>
           </div>
         </header>
 
-        {/* Texto psicológico de precio */}
+        {/* Texto principal */}
         <p
           style={{
             fontSize: 12,
@@ -307,124 +245,54 @@ export default function Home() {
             marginBottom: 14,
           }}
         >
-          Menos de lo que cuesta una sola asesoría individual, para corregir y
-          mejorar todos tus textos del mes.
+          Acceso gratuito por lanzamiento: corrige, resume, redacta, humaniza y
+          revisa tus textos académicos con IA.
         </p>
 
-        {/* Sección de precios */}
+        {/* Franja gratuita */}
         <section
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 16,
+            borderRadius: 18,
+            padding: 16,
+            border: "1px solid rgba(34,197,94,0.45)",
+            background:
+              "linear-gradient(135deg, rgba(22,163,74,0.12), rgba(15,23,42,0.97))",
+            boxShadow: "0 12px 32px rgba(34,197,94,0.18)",
             marginBottom: 20,
           }}
         >
-          {/* Plan gratis */}
-          <div style={pricingCardStyle(plan === "free")}>
-            <div style={planHeaderRowStyle}>
-              <div style={planTitleStyle}>Plan Gratis</div>
-              <span style={planBadgeStyle}>Empezar</span>
-            </div>
-            <div style={priceStyle}>
-              $0 <span style={priceUnitStyle}>/mes</span>
-            </div>
-            <ul style={pricingListStyle}>
-              <li>✔ Corrección académica lista para entregar</li>
-              <li>✔ Resúmenes básicos de textos</li>
-              <li>✖ Sin funciones avanzadas ni análisis</li>
-            </ul>
-            <button style={currentPlanButtonStyle}>Plan actual</button>
+          <div
+            style={{
+              fontSize: 12,
+              textTransform: "uppercase",
+              letterSpacing: 1.5,
+              color: "#bbf7d0",
+              marginBottom: 6,
+            }}
+          >
+            Gratis por lanzamiento
           </div>
-
-          {/* Plan PRO */}
-          <div style={pricingCardStyle(plan === "pro")}>
-            <div style={planHeaderRowStyle}>
-              <div style={{ ...planTitleStyle, color: "#22c55e" }}>
-                Plan Pro
-              </div>
-              <span
-                style={{
-                  ...planBadgeStyle,
-                  backgroundColor: "rgba(34,197,94,0.15)",
-                  color: "#bbf7d0",
-                  borderColor: "rgba(34,197,94,0.6)",
-                }}
-              >
-                Más usado
-              </span>
-            </div>
-            <div style={priceStyle}>
-              $5.000 COP<span style={priceUnitStyle}>/mes · ≈ $166 COP/día</span>
-            </div>
-            <ul style={pricingListStyle}>
-              <li>✔ Todo lo del plan Gratis</li>
-              <li>✔ Redacción natural que no parece hecha con IA</li>
-              <li>✔ Organización clara y mejora de estilo en tus trabajos</li>
-              <li>✔ Ideal para estudiantes de colegio y universidad</li>
-            </ul>
-            <button
-              onClick={() => activarPlanSimulado("pro", 5000)}
-              disabled={plan === "pro" || pagando !== null}
-              style={payButtonStyle(
-                plan === "pro",
-                pagando === "pro",
-                "#22c55e"
-              )}
-            >
-              {plan === "pro"
-                ? "Plan PRO activo"
-                : pagando === "pro"
-                ? "Activando tu plan…"
-                : "Empezar con PRO"}
-            </button>
+          <div
+            style={{
+              fontSize: 22,
+              fontWeight: 700,
+              marginBottom: 8,
+            }}
+          >
+            $0 <span style={{ fontSize: 12, color: "#9ca3af" }}>/mes</span>
           </div>
-
-          {/* Plan PREMIUM */}
-          <div style={pricingCardStyle(plan === "premium")}>
-            <div style={planHeaderRowStyle}>
-              <div style={{ ...planTitleStyle, color: "#facc15" }}>
-                Plan Premium
-              </div>
-              <span
-                style={{
-                  ...planBadgeStyle,
-                  backgroundColor: "rgba(250,204,21,0.12)",
-                  color: "#facc15",
-                  borderColor: "rgba(250,204,21,0.7)",
-                }}
-              >
-                Docentes
-              </span>
-            </div>
-            <div style={priceStyle}>
-              $7.000 COP<span style={priceUnitStyle}>/mes · ≈ $233 COP/día</span>
-            </div>
-            <ul style={pricingListStyle}>
-              <li>✔ Todo lo del plan Pro</li>
-              <li>✔ Análisis orientativo de IA en tus textos</li>
-              <li>
-                ✔ Revisión preventiva para evitar sanciones académicas por
-                plagio
-              </li>
-              <li>✔ Pensado para docentes y tutores con muchos textos</li>
-            </ul>
-            <button
-              onClick={() => activarPlanSimulado("premium", 7000)}
-              disabled={plan === "premium" || pagando !== null}
-              style={payButtonStyle(
-                plan === "premium",
-                pagando === "premium",
-                "#facc15"
-              )}
-            >
-              {plan === "premium"
-                ? "Plan PREMIUM activo"
-                : pagando === "premium"
-                ? "Activando tu plan…"
-                : "Subir a PREMIUM"}
-            </button>
-          </div>
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              color: "#e5e7eb",
+              lineHeight: 1.5,
+            }}
+          >
+            Todas las herramientas están disponibles sin pago: corrección
+            académica, redacción natural, organización, paráfrasis, detector IA
+            y revisión preventiva de plagio.
+          </p>
         </section>
 
         {/* Selector de modo */}
@@ -436,34 +304,15 @@ export default function Home() {
             marginBottom: 18,
           }}
         >
-          {MODES.map((m) => {
-            const allowed = allowedModesByPlan(plan);
-            const locked = !allowed.includes(m.id);
-
-            return (
-              <button
-                key={m.id}
-                onClick={() => {
-                  if (locked) {
-                    alert(
-                      "🔒 Esta función no está incluida en tu plan actual.\n\nDesbloquéala con el plan PRO o PREMIUM para usar todas las herramientas del editor académico."
-                    );
-                    return;
-                  }
-                  setModo(m.id);
-                }}
-                disabled={locked}
-                style={chipStyle(m.id, modo, locked)}
-              >
-                {m.label}
-                {locked && (
-                  <span style={{ fontSize: 10, marginLeft: 4 }}>
-                    {plan === "free" ? "PRO" : "PREMIUM"}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setModo(m.id)}
+              style={chipStyle(m.id, modo, false)}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
 
         {/* Área de texto */}
@@ -510,7 +359,7 @@ export default function Home() {
               opacity: cargando ? 0.7 : 1,
             }}
           >
-            {cargando ? "Procesando…" : "Procesar texto"}
+            {cargando ? "Procesando…" : "Procesar texto gratis"}
           </button>
         </div>
 
@@ -526,12 +375,6 @@ export default function Home() {
             Resultado
           </div>
 
-          {/* =========================
-             ✅ NUEVO: SOLO Detector IA y Plagio
-             - Porcentaje animado (PremiumScore)
-             - Botón Humanizar
-             - No aparece en otros modos
-             ========================= */}
           {modo === "detectarIA" && (
             <div style={{ marginBottom: 16 }}>
               <PremiumScore
@@ -792,112 +635,3 @@ function chipStyle(id: Mode, activo: Mode, locked: boolean): CSSProperties {
     color: "#9ca3af",
   };
 }
-
-/* ===================================================================
-   Relleno seguro (no afecta nada) para que el archivo quede largo.
-   No toca lógica, no toca estilos, no se ejecuta, no rompe Next.
-   (Puedes borrarlo cuando quieras.)
-===================================================================
-
-L01
-L02
-L03
-L04
-L05
-L06
-L07
-L08
-L09
-L10
-L11
-L12
-L13
-L14
-L15
-L16
-L17
-L18
-L19
-L20
-L21
-L22
-L23
-L24
-L25
-L26
-L27
-L28
-L29
-L30
-L31
-L32
-L33
-L34
-L35
-L36
-L37
-L38
-L39
-L40
-L41
-L42
-L43
-L44
-L45
-L46
-L47
-L48
-L49
-L50
-L51
-L52
-L53
-L54
-L55
-L56
-L57
-L58
-L59
-L60
-L61
-L62
-L63
-L64
-L65
-L66
-L67
-L68
-L69
-L70
-L71
-L72
-L73
-L74
-L75
-L76
-L77
-L78
-L79
-L80
-L81
-L82
-L83
-L84
-L85
-L86
-L87
-L88
-L89
-L90
-L91
-L92
-L93
-L94
-L95
-L96
-L97
-L98
-L99
-L100
-
-=================================================================== */
